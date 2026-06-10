@@ -59,3 +59,12 @@ public:
 TEST_F(utQ3BSPImportExport, importerTest) {
     EXPECT_TRUE(importerTest());
 }
+
+TEST_F(utQ3BSPImportExport, importMalformedLumpOffset) {
+    Assimp::Importer importer;
+    // pk3 whose vertices lump points past the end of the file; the parser must
+    // reject it instead of reading out of bounds, so no geometry is produced
+    const aiScene *scene = importer.ReadFile(ASSIMP_TEST_MODELS_DIR "/Q3BSP/malformed_lump_offset.pk3", 0);
+    ASSERT_NE(nullptr, scene);
+    EXPECT_EQ(0u, scene->mNumMeshes);
+}

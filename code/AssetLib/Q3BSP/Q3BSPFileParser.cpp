@@ -109,7 +109,7 @@ bool Q3BSPFileParser::readData( const std::string &rMapName ) {
 
 // ------------------------------------------------------------------------------------------------
 bool Q3BSPFileParser::parseFile() {
-    if ( m_Data.empty() ) {
+    if ( m_Data.size() < sizeof( sQ3BSPHeader ) ) {
         return false;
     }
 
@@ -118,8 +118,22 @@ bool Q3BSPFileParser::parseFile() {
         return false;
     }
 
+    // The lump directory itself must lie within the file
+    if ( m_sOffset + kMaxLumps * sizeof( sQ3BSPLump ) > m_Data.size() ) {
+        return false;
+    }
+
     // Imports the dictionary of the level
     getLumps();
+
+    // Reject any lump whose data range falls outside the file before it is read
+    for ( size_t idx = 0; idx < kMaxLumps; ++idx ) {
+        const sQ3BSPLump *lump = m_pModel->m_Lumps[ idx ];
+        if ( lump->iOffset < 0 || lump->iSize < 0 ||
+                static_cast<size_t>( lump->iOffset ) + static_cast<size_t>( lump->iSize ) > m_Data.size() ) {
+            return false;
+        }
+    }
 
     // Count data and prepare model data
     countLumps();
